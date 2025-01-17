@@ -8,13 +8,17 @@ import DeleteModal from '../components/deleteModal';
 import UpdateBlog from '../components/UpdateBlog';
 import { updateDoc } from "firebase/firestore";
 import userimage from '../assets/user.png'
+import axios from 'axios'
+import { comment } from 'postcss';
 
 
 const Dashboard = () => {
   
 
   const title = useRef()
-  const blog = useRef()
+  const content = useRef()
+  const text = useRef()
+
 
   const [loader , setLoader] = useState (false)
   const [mainLoader , setMainLoader] = useState(true)
@@ -25,68 +29,84 @@ const Dashboard = () => {
   const [deleteIndex , setDeletIndex] = useState(null)
   const [updateModal , setUpdateModal] = useState (false)
   const [updateIndex , setUpdateIndex] = useState(null)
+  const [like , setLike] = useState(0)
+  const [commentValue , setCommentValue] = useState('')
 
-
-  useEffect(()=>{
-
-    const getDatafromFirestore = async () => {
+  useEffect(() => {
       
-      try {
-        const q = query(collection(db, "allblogs"), where("uid", "==", auth.currentUser.uid) , orderBy('postingTime','desc'));
-        const querySnapshot = await getDocs(q);
-        querySnapshot.forEach((doc) => { 
-          blogArray.push ({
-            ...doc.data(),
-            docid: doc.id,
+      const allPostFunction = async () => {
+        try {
+          const accessToken = localStorage.getItem('accessToken')
+          const Allposts = await axios.get ('http://localhost:3000/api/v1/post' , {
+              headers: {
+              'Authorization': accessToken, 
+              'Content-Type': 'application/json'
+              },
           })
-          setBlogArray([...blogArray])
-        }); 
+          console.log (Allposts)
+          setBlogArray([...Allposts.data.getAllPosts])
+          setMainLoader(false)          
+        } catch (error) {
+          console.log (error)
+        }
       }
-      catch (error ){
-        console.log (error + 'unable to get data from firestore')
-      }
-      finally {
-        setMainLoader(false)
-      }
+
+      allPostFunction()
+  } , [])
+
+
+  const addComment = async (id ,commentValue) => {
+
+    try {
+      const accessToken = localStorage.getItem('accessToken');
+      const commentCreated = await axios.post('http://localhost:3000/api/v1/comment', { postID: id , text: commentValue }, {
+        headers: {
+          'Authorization': accessToken,
+          'Content-Type': 'application/json',
+        },
+      });
+
+      console.log (commentCreated)
+
+      const Allposts = await axios.get ('http://localhost:3000/api/v1/post' , {
+              headers: {
+              'Authorization': accessToken, 
+              'Content-Type': 'application/json'
+              },
+          })
+          setBlogArray([...Allposts.data.getAllPosts])
+    } catch (error) {
+      console.error('Error in commenting the post:', error);
     }
-    
-    const unsubscribe = auth.onAuthStateChanged((user) => {
-      if (user) {
-        getDatafromFirestore();
-      } else {
-        console.log("User is not logged in.");
-      }
-    });
-  }, [])
+
+
+  }
+
+  const likePost = async (id) => {
+    try {
+      const accessToken = localStorage.getItem('accessToken');
   
-  useEffect(()=>{
-
-    const getUserDatafromFirestore = async () => {
-      
-      try {
-        const q = query(collection(db, "users"), where("uid", "==", auth.currentUser.uid));
-        const querySnapshot = await getDocs(q);
-        querySnapshot.forEach((doc) => { 
-          
-          console.log (doc.data())
-          setUserObj({...doc.data(),
-            docid: doc.id,
+      // Liking the post
+      const likePostResponse = await axios.post('http://localhost:3000/api/v1/like', { postID: id }, {
+        headers: {
+          'Authorization': accessToken,
+          'Content-Type': 'application/json',
+        },
+      });
+  
+          const Allposts = await axios.get ('http://localhost:3000/api/v1/post' , {
+              headers: {
+              'Authorization': accessToken, 
+              'Content-Type': 'application/json'
+              },
           })
-        }); 
-      }
-      catch (error ){
-        console.log (error + 'unable to get user data from firestore')
-      }
+          console.log (Allposts)
+          setBlogArray([...Allposts.data.getAllPosts])
+    } catch (error) {
+      console.error('Error in liking the post:', error);
     }
-    
-    const unsubscribe = auth.onAuthStateChanged((user) => {
-      if (user) {
-        getUserDatafromFirestore();
-      } else {
-        console.log("User is not logged in.");
-      }
-    });
-  }, [])
+  };
+  
 
 
   const addBlog = async (event) => {
@@ -94,106 +114,40 @@ const Dashboard = () => {
     event.preventDefault()
     setLoader(true)
 
-    // Add a new document with a generated id.
-    try {
-      const docRef = await addDoc(collection(db, "allblogs"), {
-        title: title.current.value,
-        blog: blog.current.value,
-        uid: auth.currentUser.uid,
-        postingTime: Timestamp.now(),
-        postingDay: getDate(),
-        firstName: userObj.firstName,
-        lastName: userObj.lastName,
-      });
-        console.log("Document written with ID: ", docRef.id);
+      try {
         
-        blogArray.unshift ({
-          title: title.current.value,
-          blog: blog.current.value,
-          docid: docRef.id,
-          uid: auth.currentUser.uid,
-          postingTime: Timestamp.now(),
-          postingDay: getDate(),
-          firstName: userObj.firstName,
-          lastName: userObj.lastName,
-        })
-        setBlogArray([...blogArray])
-        title.current.value = ''
-        blog.current.value = ''
-    } catch {
-      console.log ('unable to add data')
-    } finally{
-    setLoader(false)
-  }
-  }
-
-
-
-  function getDate() {
-    const date = new Date();
-    const day = new Intl.DateTimeFormat('en-GB', { day: 'numeric' }).format(date);
-    const month = new Intl.DateTimeFormat('en-GB', { month: 'long' }).format(date);
-    const year = new Intl.DateTimeFormat('en-GB', { year: 'numeric' }).format(date);
-  
-    // Combine all parts with a comma after the day
-    const formattedDate = `${month} ${day}, ${year}`;
-    return formattedDate;
-  }
-  
-
-
-  const openDeleteModal = (docid , index) => {
-    setDelModal (true)
-    setDBdocid(docid)
-    setDeletIndex(index)
-  }
-
-
-  const deleteBlog = async (docid , index) => {
-    try {
-      await deleteDoc(doc(db, "allblogs", docid));
-      blogArray.splice(index , 1)
-      setBlogArray ([...blogArray])
-      setDelModal(false)
-      }catch {
-      console.log ('unable to delete')
-    }
-  }
-
-  const cancelDelete = () => {
-    setDelModal (false)
-  }
-
-
-  const openUpdateModal = (docid , index) => {
-    setUpdateModal (true)
-    setUpdateIndex (index)
-    setDBdocid(docid)
-    setDeletIndex (index)
-  }
-
-  const updateValues = async (itemid , index , titleUpdated , blogUpdated , event) => {
+        const accessToken = localStorage.getItem('accessToken');
     
-    event.preventDefault()
+        const addPost = await axios.post('http://localhost:3000/api/v1/post', { title: title.current.value , content: content.current.value }, {
+          headers: {
+            'Authorization': accessToken,
+            'Content-Type': 'application/json',
+          },
+        });
+      
+        console.log (addPost)
+        const Allposts = await axios.get ('http://localhost:3000/api/v1/post' , {
+          headers: {
+          'Authorization': accessToken, 
+          'Content-Type': 'application/json'
+          },
+      })
+      console.log (Allposts)
+      setBlogArray([...Allposts.data.getAllPosts])
 
-    try {
-      const washingtonRef = doc(db, "allblogs", itemid);
-      // Set the "capital" field of the city 'DC'
-      await updateDoc(washingtonRef, {
-        title: titleUpdated,
-        blog: blogUpdated,
-      });
-      blogArray[index].title = titleUpdated
-      blogArray[index].blog = blogUpdated
-      setBlogArray([...blogArray])
-      setUpdateModal(false)
-    } catch {
-      console.log ('unable to update data')
-    }
-  }
 
-  const cancelUpdate = () => {
-    setUpdateModal (false)
+      } catch (error) {
+        console.log (error)
+      } finally{
+        setLoader(false)
+      }
+    
+
+
+
+
+
+
   }
 
   return (
@@ -204,7 +158,7 @@ const Dashboard = () => {
       <div className='flex flex-col gap-5 justify-center items-start px-5 min-[450px]:px-[65px] py-7 bg-[#ffffff] w-[95%] min-[400px]:w-[85%] min-[900px]:w-[70%] min-w-[300px] min-h-[40vh] rounded-lg shadow-lg'>
           <form onSubmit={addBlog} className='flex w-full flex-col justify-center items-start gap-4'>
             <input type="text" placeholder="Title" className="w-full input input-bordered focus:ring-2 focus:ring-[#7749f8] focus:ring-offset-1 focus:ring-offset-[#f8f9fa]" minLength={5} maxLength={50} required ref={title}/>
-            <textarea className="textarea textarea-bordered w-full focus:ring-2 focus:ring-[#7749f8] focus:ring-offset-1 focus:ring-offset-[#f8f9fa]" placeholder="What is in your mind" minLength={100} maxLength={3000} ref={blog} required></textarea>
+            <textarea className="textarea textarea-bordered w-full focus:ring-2 focus:ring-[#7749f8] focus:ring-offset-1 focus:ring-offset-[#f8f9fa]" placeholder="What is in your mind" maxLength={3000} ref={content} required></textarea>
             <button type='submit' className="bg-[#7749f8] text-white rounded-lg py-2 px-6">{loader ? <span className="loading loading-spinner loading-md"></span> : 'Publish Blog'}</button>
           </form>
       </div>
@@ -213,23 +167,34 @@ const Dashboard = () => {
 
       <div className='flex flex-col gap-5 justify-start items-start w-[80%] min-[400px]:w-[85%] min-[900px]:w-[70%]'>
         {mainLoader ? <div className='text-center w-full mt-5'><span className="loading loading-spinner loading-lg text-[#7749f8]"></span></div>: blogArray.length > 0 ? blogArray.map ((items , index)=> {
-          return <div key={items.docid} className='flex w-[100%] px-7 py-5 flex-col bg-[#ffffff] justify-center items-start gap-4 rounded-lg shadow-lg  min-h-[40vh] min-w-[300px]'>
+          return <div key={items._id} className='flex w-[100%] px-7 py-5 flex-col bg-[#ffffff] justify-center items-start gap-4 rounded-lg shadow-lg  min-h-[40vh] min-w-[300px]'>
             <div className='flex justify-start items-start gap-4 w-full pe-5'>
               <div className='text-white bg-[#7749f8] w-[70px] rounded-lg flex justify-center items-center'>
                 <img src={userimage} alt="logo" className='w-100'/>
               </div>
               <div className='flex flex-col justify-start items-start w-[80%]'>
                 <p className='font-bold text-2xl w-full break-words'>{items.title}</p>
-                <p className='text-sm text-[#747779] font-bold'>{userObj.firstName}{' '}{userObj.lastName} - {items.postingDay}</p>
+                <p className='text-1xl w-full break-words'>{items.user.username}</p>
               </div>
             </div>
             <div className='break-words w-full'>
-              <p className='break-words text-[#7f868d]'>{items.blog}</p>
+              <p className='break-words text-[#7f868d]'>{items.content}</p>
             </div>
             <div className='flex justify-start gap-1'>
-              <button onClick={()=> openDeleteModal(items.docid , index)} className='hover:bg-[#dadcde] text-[#7749f8] rounded-lg px-3 py-1'>Delete</button>
-              <button onClick={()=> openUpdateModal(items.docid ,index)} className='hover:bg-[#dadcde] text-[#7749f8] rounded-lg px-3 py-1'>Edit</button>
+              <button onClick={()=> likePost(items._id)} className='hover:bg-[#dadcde] text-[#7749f8] rounded-lg px-3 py-1'>Likes ({items.likes.length === 0 ? '0' : items.likes.length})</button>
+              <button onClick={()=> openDeleteModal(items.docid , index)} className='hover:bg-[#dadcde] text-[#7749f8] rounded-lg px-3 py-1'>Comments ({items.comments.length === 0 ? '0' : items.comments.length}) </button>
             </div>
+            <div className='flex flex-col gap-2 w-full'>
+              <input onChange={(e)=> setCommentValue (e.target.value)} type="text" placeholder="comment here...." className="w-full input input-bordered focus:ring-2 focus:ring-[#7749f8] focus:ring-offset-1 focus:ring-offset-[#f8f9fa]" required ref={text}/>
+              <button onClick={() => addComment (items._id , commentValue)} className="bg-[#7749f8] w-full text-white rounded-lg py-2 px-6">add comment</button>
+            </div>
+            <p>All comments here:</p>
+            {items.comments.map((itemxx) => {
+              return <div key={items._id} className='text-[#7749f8] p-2 border shadow-md rounded-lg w-full'>
+                <p>{itemxx.text}</p>
+              </div>
+            })
+            }
           </div>}) : <div className='flex w-[100%] px-7 py-5 flex-col bg-[#ffffff] justify-center items-start gap-4 rounded-lg shadow-lg  min-h-[40vh] min-w-[300px]'>
             <h1 className='text-2xl text-[#7749f8] m-4 text-start ms-[8%] font-bold'>Post your blogs right now !!</h1>
         </div>

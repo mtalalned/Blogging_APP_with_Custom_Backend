@@ -1,22 +1,37 @@
 import React, { useEffect } from 'react'
-import { onAuthStateChanged } from "firebase/auth";
-import { auth } from '../Configs/firebaseconfig';
 import { useNavigate } from 'react-router-dom';
+import axios from 'axios'
 
 const ProtectedRoutes = ({component}) => {
   
     const navigate = useNavigate()
 
     useEffect (()=>{
-        onAuthStateChanged(auth, (user) => {
-            if (user) {
-            const uid = user.uid;
-            // ...
-            console.log (user.uid)
-          } else {
-            navigate ('/login')
+      
+      const CheckFunction = async () => {
+        try {
+            const accessToken = localStorage.getItem('accessToken')
+
+            if (!accessToken) return navigate('/')
+
+            const protectedRoute = await axios.get ('http://localhost:3000/api/v1/userdata' , 
+                {
+                    headers: {
+                    'Authorization': accessToken, 
+                    'Content-Type': 'application/json'
+                    },
+                }
+            )
+            console.log (protectedRoute)
+            if (protectedRoute.data.message === 'you are getting all user detail') {
+                return
+            }
+        } catch (error) {
+            navigate('/')
         }
-        });
+    }
+
+    CheckFunction()
     } , [])
     
 

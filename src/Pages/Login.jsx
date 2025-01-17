@@ -1,7 +1,6 @@
 import React, {useRef , useState} from 'react'
-import { signInWithEmailAndPassword } from "firebase/auth";
-import { auth } from '../Configs/firebaseconfig';
 import { useNavigate } from 'react-router-dom';
+import axios from 'axios'
 
 const Login = () => {
   
@@ -13,35 +12,25 @@ const Login = () => {
   const [loginFailed , setLoginFailed] = useState(false)
 
 
-  const SignInUser = (event)=> {
+  const SignInUser = async (event)=> {
     
     // prevent default
     event.preventDefault()
     setLoader(true)
-    setInvalidEmail(false)
-    setLoginFailed(false)
     
-    signInWithEmailAndPassword(auth, email.current.value, password.current.value)
-      .then((userCredential) => {
-        // Signed in 
-        const user = userCredential.user;
-        // ...
-        console.log ('user logged in')
-        setLoader (false)
-        navigate('/dashboard')
+    try {
+      const responseLogin = await axios.post('http://localhost:3000/api/v1/login' , {
+        email: email.current.value , password: password.current.value
       })
-      .catch((error) => {
-        const errorCode = error.code;
-        const errorMessage = error.message;
-        console.log (error.message)
-        if (errorMessage === 'Firebase: Error (auth/invalid-credential).' || errorMessage === 'Firebase: Error (auth/invalid-email).') {
-          setInvalidEmail (true)
-        }else {
-          setLoginFailed(true)
-        }
-        setLoader (false)
-        
-      });
+      if (responseLogin.data.message === 'user logged In successfully') {
+        localStorage.setItem('accessToken' , responseLogin.data.accessToken)
+        navigate('dashboard')
+      }
+      setLoader(false)
+
+    } catch (error) {
+      console.log (error)
+    }
 
       email.current.value = ''
       password.current.value = ''
