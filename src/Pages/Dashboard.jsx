@@ -1,15 +1,8 @@
 import React, { useRef, useState , useEffect} from 'react'
-import { auth } from '../Configs/firebaseconfig'
-import { collection, addDoc , Timestamp} from "firebase/firestore";
-import { db } from '../Configs/firebaseconfig'; 
-import { query, where, getDocs , orderBy} from "firebase/firestore";
-import { doc, deleteDoc } from "firebase/firestore";
 import DeleteModal from '../components/deleteModal';
 import UpdateBlog from '../components/UpdateBlog';
-import { updateDoc } from "firebase/firestore";
 import userimage from '../assets/user.png'
 import axios from 'axios'
-import { comment } from 'postcss';
 
 
 const Dashboard = () => {
@@ -37,7 +30,7 @@ const Dashboard = () => {
       const allPostFunction = async () => {
         try {
           const accessToken = localStorage.getItem('accessToken')
-          const Allposts = await axios.get ('http://localhost:3000/api/v1/post' , {
+          const Allposts = await axios.get ('https://blogging-app-backend-sandy.vercel.app/api/v1/post' , {
               headers: {
               'Authorization': accessToken, 
               'Content-Type': 'application/json'
@@ -59,7 +52,7 @@ const Dashboard = () => {
 
     try {
       const accessToken = localStorage.getItem('accessToken');
-      const commentCreated = await axios.post('http://localhost:3000/api/v1/comment', { postID: id , text: commentValue }, {
+      const commentCreated = await axios.post('https://blogging-app-backend-sandy.vercel.app/api/v1/comment', { postID: id , text: commentValue }, {
         headers: {
           'Authorization': accessToken,
           'Content-Type': 'application/json',
@@ -68,7 +61,7 @@ const Dashboard = () => {
 
       console.log (commentCreated)
 
-      const Allposts = await axios.get ('http://localhost:3000/api/v1/post' , {
+      const Allposts = await axios.get ('https://blogging-app-backend-sandy.vercel.app/api/v1/post' , {
               headers: {
               'Authorization': accessToken, 
               'Content-Type': 'application/json'
@@ -87,14 +80,14 @@ const Dashboard = () => {
       const accessToken = localStorage.getItem('accessToken');
   
       // Liking the post
-      const likePostResponse = await axios.post('http://localhost:3000/api/v1/like', { postID: id }, {
+      const likePostResponse = await axios.post('https://blogging-app-backend-sandy.vercel.app/api/v1/like', { postID: id }, {
         headers: {
           'Authorization': accessToken,
           'Content-Type': 'application/json',
         },
       });
   
-          const Allposts = await axios.get ('http://localhost:3000/api/v1/post' , {
+          const Allposts = await axios.get ('https://blogging-app-backend-sandy.vercel.app/api/v1/post' , {
               headers: {
               'Authorization': accessToken, 
               'Content-Type': 'application/json'
@@ -118,7 +111,7 @@ const Dashboard = () => {
         
         const accessToken = localStorage.getItem('accessToken');
     
-        const addPost = await axios.post('http://localhost:3000/api/v1/post', { title: title.current.value , content: content.current.value }, {
+        const addPost = await axios.post('https://blogging-app-backend-sandy.vercel.app/api/v1/post', { title: title.current.value , content: content.current.value }, {
           headers: {
             'Authorization': accessToken,
             'Content-Type': 'application/json',
@@ -126,7 +119,7 @@ const Dashboard = () => {
         });
       
         console.log (addPost)
-        const Allposts = await axios.get ('http://localhost:3000/api/v1/post' , {
+        const Allposts = await axios.get ('https://blogging-app-backend-sandy.vercel.app/api/v1/post' , {
           headers: {
           'Authorization': accessToken, 
           'Content-Type': 'application/json'

@@ -21,7 +21,7 @@ const Signup = () => {
 
     try {
       
-      const register = await axios.post('http://localhost:3000/api/v1/register' , {email: email.current.value , password: password.current.value , username: username.current.value})
+      const register = await axios.post('https://blogging-app-backend-sandy.vercel.app/api/v1/register' , {email: email.current.value , password: password.current.value , username: username.current.value})
 
       email.current.value = ''
       password.current.value = ''

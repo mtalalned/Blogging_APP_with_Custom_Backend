@@ -19,7 +19,7 @@ const Login = () => {
     setLoader(true)
     
     try {
-      const responseLogin = await axios.post('http://localhost:3000/api/v1/login' , {
+      const responseLogin = await axios.post('https://blogging-app-backend-sandy.vercel.app/api/v1/login' , {
         email: email.current.value , password: password.current.value
       })
       if (responseLogin.data.message === 'user logged In successfully') {

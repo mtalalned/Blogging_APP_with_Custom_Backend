@@ -13,7 +13,7 @@ const Navbar = () => {
   const SignOutUser = async () => {
 
     try {
-      const logout = await axios.post('http://localhost:3000/api/v1/logout')
+      const logout = await axios.post('https://blogging-app-backend-sandy.vercel.app/api/v1/logout')
       localStorage.removeItem('accessToken')
       navigate('/')
     } catch (error) {

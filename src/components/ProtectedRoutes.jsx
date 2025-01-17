@@ -14,7 +14,7 @@ const ProtectedRoutes = ({component}) => {
 
             if (!accessToken) return navigate('/')
 
-            const protectedRoute = await axios.get ('http://localhost:3000/api/v1/userdata' , 
+            const protectedRoute = await axios.get ('https://blogging-app-backend-sandy.vercel.app/api/v1/userdata' , 
                 {
                     headers: {
                     'Authorization': accessToken, 
