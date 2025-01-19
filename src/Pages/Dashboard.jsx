@@ -150,7 +150,7 @@ const Dashboard = () => {
 
       <div className='flex flex-col gap-5 justify-center items-start px-5 min-[450px]:px-[65px] py-7 bg-[#ffffff] w-[95%] min-[400px]:w-[85%] min-[900px]:w-[70%] min-w-[300px] min-h-[40vh] rounded-lg shadow-lg'>
           <form onSubmit={addBlog} className='flex w-full flex-col justify-center items-start gap-4'>
-            <input type="text" placeholder="Title" className="w-full input input-bordered focus:ring-2 focus:ring-[#7749f8] focus:ring-offset-1 focus:ring-offset-[#f8f9fa]" minLength={5} maxLength={50} required ref={title}/>
+            <input type="text" placeholder="Title" className="w-full input input-bordered focus:ring-2 focus:ring-[#7749f8] focus:ring-offset-1 focus:ring-offset-[#f8f9fa]" required ref={title}/>
             <textarea className="textarea textarea-bordered w-full focus:ring-2 focus:ring-[#7749f8] focus:ring-offset-1 focus:ring-offset-[#f8f9fa]" placeholder="What is in your mind" maxLength={3000} ref={content} required></textarea>
             <button type='submit' className="bg-[#7749f8] text-white rounded-lg py-2 px-6">{loader ? <span className="loading loading-spinner loading-md"></span> : 'Publish Blog'}</button>
           </form>
@@ -167,7 +167,7 @@ const Dashboard = () => {
               </div>
               <div className='flex flex-col justify-start items-start w-[80%]'>
                 <p className='font-bold text-2xl w-full break-words'>{items.title}</p>
-                <p className='text-1xl w-full break-words'>{items.user.username}</p>
+                <p className='text-1xl w-full break-words'>Posted by: {items.user.username}</p>
               </div>
             </div>
             <div className='break-words w-full'>
@@ -182,9 +182,10 @@ const Dashboard = () => {
               <button onClick={() => addComment (items._id , commentValue)} className="bg-[#7749f8] w-full text-white rounded-lg py-2 px-6">add comment</button>
             </div>
             <p>All comments here:</p>
-            {items.comments.map((itemxx) => {
-              return <div key={items._id} className='text-[#7749f8] p-2 border shadow-md rounded-lg w-full'>
-                <p>{itemxx.text}</p>
+            {items.comments.map((itemxx , index) => {
+              return <div key={items._id} className='text-gray-500 p-2 border shadow-md rounded-lg w-full'>
+                <p>comment by {itemxx.user.username}</p>
+                <p className='text-[#7749f8]'>{itemxx.text}</p>
               </div>
             })
             }
